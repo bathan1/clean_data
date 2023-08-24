@@ -3,5 +3,4 @@ myenv
 __pycache__
 vars.txt
 final_clean.xlsx
-no_measurements.txt
-not_in_clean.txt
+txts

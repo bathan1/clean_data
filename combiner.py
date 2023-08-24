@@ -18,7 +18,7 @@ print('Matched IDs!')
 
 # Delete patients without measurements
 count_deleted_patients = 0
-file = open('no_measurements.txt', 'w')
+file = open('./txts/no_measurements.txt', 'w')
 for index_p, row_patients in patients_df.iterrows():
     if pd.isna(row_patients[22]):
         count_deleted_patients += 1 # Increment count
@@ -31,7 +31,7 @@ print('Deleted patients without measurements!')
 
 
 # Iterate one more time to include any patients not in the clean sheet
-file = open('not_in_clean.txt', 'w')
+file = open('./txts/not_in_clean.txt', 'w')
 count_patients_not_in_clean = 0
 new_rows = []
 for index_c, row_calcs in calculations_df.iterrows():
