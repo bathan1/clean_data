@@ -14,24 +14,41 @@ report_column = 8
 dob_term = 'D.O.B:'
 dob_pattern = re.compile(rf'{re.escape(dob_term)}\s+(.*)')
 dob_file = open('./txts/dob.txt', 'w')
-
-accession_term = 'Accession #:' # To ensure that the accessions match up to report
 no_dob_count = 0
 
 # Create a dataframe to hold the DOBs for easy copy + paste
 data = {'DOB': []}
 dob_df = pd.DataFrame(data)
 dob_list = []
+
+a_data = {'Accession no.': []}
+accession_df = pd.DataFrame(a_data)
+accession_list = []
+accession_term = 'Accession #:' # To ensure that the accessions match up to report
+
+id_data = {'Patient ID': []}
+id_df = pd.DataFrame(id_data)
+id_list = []
+
 for index, row in cleaned_df.iterrows():
     report = str(row[report_column])
     dob_match = dob_pattern.search(report)
 
+    # Get patient ID
+    patient_id = row[13]
+    id_list.append(patient_id)
+
+    # Get accessions
     accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
     accession_match = accession_pattern.search(report)
     # Ensure accessions in report match accession in spreadsheet
     if not accession_match:
         print(f'Accession not matched: {str(row[3])}')
+    else:
+        extracted_accession = accession_match.group(1).strip()
+        accession_list.append(extracted_accession)
         
+    # Get DOB
     if dob_match:
         extracted_dob = dob_match.group(1).strip()
         dob_file.write(extracted_dob + '\n')
@@ -42,9 +59,18 @@ for index, row in cleaned_df.iterrows():
 
 dob_file.write(f'Number of patients with incomplete reports: {str(no_dob_count)}')
 dob_df['DOB'] = dob_list # Add DOB list to the data frame
-print('Wrote out D.O.B\'s!')
-dob_df.to_csv('./csvs/extracted_dobs.csv', index=False) # Write out dataframe to csv
+accession_df['Accession no.'] = accession_list # Add Accession list to data frame
+id_df['Patient ID'] = id_list
+
+# Write out dataframes to csv
+dob_df.to_csv('./csvs/extracted_dobs.csv', index=False) 
+accession_df.to_csv('./csvs/accessions.csv', index=False) 
+id_df.to_csv('./csvs/patient_ids.csv', index=False)
 dob_file.close() # Close file
+
+print('Wrote out D.O.Bs!')
+print('Wrote out Accessions!')
+print('Wrote out Patient IDs!')
 
 # Now write out CT completion dates
 completion_term = 'Completion Date:'
@@ -77,7 +103,7 @@ age_mos_list = []
 
 test = []
 
-combined_df = pd.concat([dob_df, completion_df], axis=1)
+combined_df = pd.concat([accession_df, id_df, dob_df, completion_df], axis=1)
 for index, row in combined_df.iterrows():
     dob_date = datetime.strptime(row['DOB'], '%m/%d/%Y')
     completion_date = datetime.strptime(row['Completion Date'], '%m/%d/%Y')
