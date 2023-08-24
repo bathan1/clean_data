@@ -28,6 +28,10 @@ id_data = {'Patient ID': []}
 id_df = pd.DataFrame(id_data)
 id_list = []
 
+gender_data = {'Gender': []}
+gender_df = pd.DataFrame(gender_data)
+gender_list = []
+
 # DOB column setup
 data = {'DOB': []}
 dob_df = pd.DataFrame(data)
@@ -46,10 +50,6 @@ for index, row in cleaned_df.iterrows():
     report = str(row[report_column])
     dob_match = dob_pattern.search(report)
 
-    # Get patient ID
-    patient_id = row[13]
-    id_list.append(patient_id)
-
     # Get accessions
     accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
     accession_match = accession_pattern.search(report)
@@ -59,6 +59,17 @@ for index, row in cleaned_df.iterrows():
     else:
         extracted_accession = accession_match.group(1).strip()
         accession_list.append(extracted_accession)
+
+    # Get patient ID
+    patient_id = row[13]
+    id_list.append(patient_id)
+
+    # Get gender
+    gender = row[11]
+    if gender == 'Female':
+        gender_list.append('F')
+    else:
+        gender_list.append('M')
         
     # Get DOB
     if dob_match:
@@ -83,11 +94,12 @@ dob_file.close() # Close file
 # Next, populate dataframes
 accession_df['Accession no.'] = accession_list
 id_df['Patient ID'] = id_list
+gender_df['Gender'] = gender_list
 dob_df['DOB'] = dob_list 
 completion_df['Completion Date'] = completion_list 
 
 # Combine dataframes into one dataframe
-combined_df = pd.concat([accession_df, id_df, dob_df, completion_df], axis=1)
+combined_df = pd.concat([accession_df, id_df, gender_df, dob_df, completion_df], axis=1)
 
 # Check for duplicates from original patients sheet
 duplicates = check_duplicates(id_df)
@@ -131,8 +143,11 @@ for index, row in combined_df.iterrows():
 age_df['Age(mos)'] = age_mos_list
 age_df['Age(yrs)'] = age_yrs_list
 
+combined_df = combined_df.reset_index(drop=True)
+age_df = age_df.reset_index(drop=True)
+
 # Concatenate ages to main dataframe
 combined_df = pd.concat([combined_df, age_df], axis=1)
-
+print(combined_df)
 combined_df.to_csv('./csvs/combined.csv', index=False)
 print('Wrote out all data to csv!')
