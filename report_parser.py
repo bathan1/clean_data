@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from id_duplicate_checker import check_duplicates
 
 # Import csv
 uncleaned_df = pd.read_csv('./csvs/final_data.csv', header=None)
@@ -85,17 +86,9 @@ id_df['Patient ID'] = id_list
 dob_df['DOB'] = dob_list 
 completion_df['Completion Date'] = completion_list 
 
-# Write out dataframes to csv
-dob_df.to_csv('./csvs/extracted_dobs.csv', index=False) 
-accession_df.to_csv('./csvs/accessions.csv', index=False) 
-id_df.to_csv('./csvs/patient_ids.csv', index=False)
-completion_df.to_csv('./csvs/completion_date.csv', index=False) # Write out to csv
-
-
-print('Wrote out D.O.Bs!')
-print('Wrote out Accessions!')
-print('Wrote out Patient IDs!')
-print('Wrote out completion dates!')
+# Check for duplicates from original patients sheet
+duplicates = check_duplicates(id_df)
+print(duplicates)
 
 # Now get date difference between DOB and CT Completion date
 from datetime import datetime
@@ -127,5 +120,8 @@ for index, row in combined_df.iterrows():
 age_df['Age(mos)'] = age_mos_list
 age_df['Age(yrs)'] = age_yrs_list
 
-age_df.to_csv('./csvs/ages.csv', index=False)
-print('Wrote out ages!')
+# Combine the columns into one dataframe
+combined_df = pd.concat([combined_df, age_df], axis=1)
+
+combined_df.to_csv('./csvs/combined.csv', index=False)
+print('Wrote out all data to csv!')
