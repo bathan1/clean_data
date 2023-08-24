@@ -16,19 +16,30 @@ dob_pattern = re.compile(rf'{re.escape(dob_term)}\s+(.*)')
 dob_file = open('./txts/dob.txt', 'w')
 no_dob_count = 0
 
-# Create a dataframe to hold the DOBs for easy copy + paste
-data = {'DOB': []}
-dob_df = pd.DataFrame(data)
-dob_list = []
-
+# Accesssion column setup
 a_data = {'Accession no.': []}
 accession_df = pd.DataFrame(a_data)
 accession_list = []
 accession_term = 'Accession #:' # To ensure that the accessions match up to report
 
+# MRN column setup
 id_data = {'Patient ID': []}
 id_df = pd.DataFrame(id_data)
 id_list = []
+
+# DOB column setup
+data = {'DOB': []}
+dob_df = pd.DataFrame(data)
+dob_list = []
+
+# Study Date Column setup
+completion_term = 'Completion Date:'
+completion_pattern = re.compile(rf'{re.escape(completion_term)}\s+(.*)')
+
+# Make am empty dataframe for completion date
+data = {'Completion Date': []}
+completion_df = pd.DataFrame(data)
+completion_list = []
 
 for index, row in cleaned_df.iterrows():
     report = str(row[report_column])
@@ -57,40 +68,33 @@ for index, row in cleaned_df.iterrows():
         no_dob_count += 1
         dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
 
-dob_file.write(f'Number of patients with incomplete reports: {str(no_dob_count)}')
-dob_df['DOB'] = dob_list # Add DOB list to the data frame
-accession_df['Accession no.'] = accession_list # Add Accession list to data frame
-id_df['Patient ID'] = id_list
-
-# Write out dataframes to csv
-dob_df.to_csv('./csvs/extracted_dobs.csv', index=False) 
-accession_df.to_csv('./csvs/accessions.csv', index=False) 
-id_df.to_csv('./csvs/patient_ids.csv', index=False)
-dob_file.close() # Close file
-
-print('Wrote out D.O.Bs!')
-print('Wrote out Accessions!')
-print('Wrote out Patient IDs!')
-
-# Now write out CT completion dates
-completion_term = 'Completion Date:'
-completion_pattern = re.compile(rf'{re.escape(completion_term)}\s+(.*)')
-
-# Make am empty dataframe for completion date
-data = {'Completion Date': []}
-completion_df = pd.DataFrame(data)
-completion_list = []
-
-for index, row in cleaned_df.iterrows():
-    report = str(row[report_column])
+    # Get Completion Date
     completion_match = completion_pattern.search(report)
     
     if completion_match:
         extracted_completion = completion_match.group(1).split()[0]
         completion_list.append(extracted_completion)
 
-completion_df['Completion Date'] = completion_list # Add list to column
+# First write out number of patients with incomplete reports
+dob_file.write(f'Number of patients with incomplete reports: {str(no_dob_count)}')
+dob_file.close() # Close file
+
+# Next, populate dataframes
+accession_df['Accession no.'] = accession_list
+id_df['Patient ID'] = id_list
+dob_df['DOB'] = dob_list 
+completion_df['Completion Date'] = completion_list 
+
+# Write out dataframes to csv
+dob_df.to_csv('./csvs/extracted_dobs.csv', index=False) 
+accession_df.to_csv('./csvs/accessions.csv', index=False) 
+id_df.to_csv('./csvs/patient_ids.csv', index=False)
 completion_df.to_csv('./csvs/completion_date.csv', index=False) # Write out to csv
+
+
+print('Wrote out D.O.Bs!')
+print('Wrote out Accessions!')
+print('Wrote out Patient IDs!')
 print('Wrote out completion dates!')
 
 # Now get date difference between DOB and CT Completion date
