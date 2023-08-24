@@ -14,5 +14,5 @@ if __name__ == '__main__':
     print('Set columns back to original names')
 
     # Export to csv
-    combined_cleaned.to_excel('final_clean.xlsx', index=False)
+    combined_cleaned.to_excel('./csvs/final_clean.xlsx', index=False)
     print('Exported to xlsx')
