@@ -86,9 +86,22 @@ id_df['Patient ID'] = id_list
 dob_df['DOB'] = dob_list 
 completion_df['Completion Date'] = completion_list 
 
+# Combine dataframes into one dataframe
+combined_df = pd.concat([accession_df, id_df, dob_df, completion_df], axis=1)
+
 # Check for duplicates from original patients sheet
 duplicates = check_duplicates(id_df)
-print(duplicates)
+
+# Before getting date diff, remove the dupes from the list
+
+indices_to_drop = []
+for index, row in combined_df.iterrows():
+    for dupe in duplicates:
+        if dupe == row['Patient ID']:
+            print(f'dupe found for {row["Patient ID"]}!')
+            indices_to_drop.append(index)
+
+combined_df = combined_df.drop(indices_to_drop)
 
 # Now get date difference between DOB and CT Completion date
 from datetime import datetime
@@ -98,9 +111,7 @@ age_df = pd.DataFrame(data)
 age_yrs_list = []
 age_mos_list = []
 
-test = []
 
-combined_df = pd.concat([accession_df, id_df, dob_df, completion_df], axis=1)
 for index, row in combined_df.iterrows():
     dob_date = datetime.strptime(row['DOB'], '%m/%d/%Y')
     completion_date = datetime.strptime(row['Completion Date'], '%m/%d/%Y')
@@ -120,7 +131,7 @@ for index, row in combined_df.iterrows():
 age_df['Age(mos)'] = age_mos_list
 age_df['Age(yrs)'] = age_yrs_list
 
-# Combine the columns into one dataframe
+# Concatenate ages to main dataframe
 combined_df = pd.concat([combined_df, age_df], axis=1)
 
 combined_df.to_csv('./csvs/combined.csv', index=False)
