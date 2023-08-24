@@ -10,6 +10,7 @@ patients_df['CleanID'] = patients_df['Cnmc_ID'].str.replace(r'CNMC_', '')
 # Change column names
 patients_df.columns = range(len(patients_df.columns))
 # print(patients_df.columns)
+print('Patient sheet cleaned!')
 
 # Import calculations csv file
 calculations_csv = './csvs/calculations.csv'
@@ -21,3 +22,4 @@ calculations_df['CleanID'] = calculations_df['Subject ID'].str.replace(r'CNMC_',
 # Change column names
 calculations_df.columns = range(len(calculations_df.columns))
 # print(calculations_df.columns)
+print('Calculations sheet cleaned!')

@@ -10,5 +10,8 @@ with open('vars.txt', 'r') as file:
 
 # Set columns
 combined_cleaned.columns = new_columns
+print('Set columns back to original names')
+
 # Export to csv
 combined_cleaned.to_excel('final_clean.xlsx', index=False)
+print('Exported to xlsx')
