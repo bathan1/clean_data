@@ -1,3 +1,6 @@
 csvs
 myenv
 __pycache__
+column_renamer.py
+output.csv
+vars.txt
