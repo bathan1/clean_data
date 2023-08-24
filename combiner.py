@@ -29,20 +29,29 @@ file.write(str(count_deleted_patients))
 file.close()
 print('Deleted patients without measurements!')
 
-new_rows = []
+
 # Iterate one more time to include any patients not in the clean sheet
+file = open('not_in_clean.txt', 'w')
+count_patients_not_in_clean = 0
+new_rows = []
 for index_c, row_calcs in calculations_df.iterrows():
     patient_id = row_calcs[20]
     if patient_id not in patients_df[21].values:
-        new_row = {column: '' for column in patients_df.columns}
-        new_row[0] = row_calcs[0]
+        count_patients_not_in_clean += 1
+        file.write(str(row_calcs[0] + '\n')) # Write out patient ID
+        new_row = {column: '' for column in patients_df.columns} # Make new row with blank values
+        new_row[0] = row_calcs[0] # Write ID
         
+        # Loop through calculation columns
         for i in range(23, 43):
             new_row[i] = row_calcs[i - 22]
-        new_rows.append(new_row)
+        new_rows.append(new_row) # Add this row to the array
 
 new_rows_df = pd.DataFrame(new_rows)
 patients_df = pd.concat([patients_df, new_rows_df])
+
+file.write(str(count_patients_not_in_clean))
+file.close()
 print('Added patients not in patients sheet')
 
 # Delete unnecessary columns
