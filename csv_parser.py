@@ -41,54 +41,67 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     completion_df = pd.DataFrame(data)
     completion_list = []
 
-    for index, row in cleaned_df.iterrows():
-        report = str(row[report_column])
-        dob_match = dob_pattern.search(report)
+    # Initialize duplicate count
+    dupe_count = 0
+    with open('./out/duplicates.txt', 'w') as dupe_file:
+        for index, row in cleaned_df.iterrows():
+            report = str(row[report_column])
+            dob_match = dob_pattern.search(report)
 
-        # Get accessions
-        accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
-        accession_match = accession_pattern.search(report)
-        # Ensure accessions in report match accession in spreadsheet
-        if not accession_match:
-            print(f'No Accession # found for patient {str(row[13])}')
-            accession_list.append('')
-        else:
-            extracted_accession = accession_match.group(1).strip()
-            if (str(row[3]) != extracted_accession):
-                print(f'Accession # {str(row[3])} not matched for patient {str(row[13])}')
+            # Get patient ID
+            patient_id = row[13]
+            # Check if patient is a dupe
+            (is_dupe, dupe_count) = check_duplicates(patient_id, dupe_count)
+            if is_dupe:
+                print(f'Patient {patient_id} is a dupe!')
+                dupe_file.write(f'{patient_id}\n')
+                continue
+            # If patient isn't a dupe, continue with the parsing
+            id_list.append(patient_id)
+
+            # Get accessions
+            accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
+            accession_match = accession_pattern.search(report)
+            # Ensure accessions in report match accession in spreadsheet
+            if not accession_match:
+                print(f'No Accession # found for patient {str(row[13])}')
                 accession_list.append('')
             else:
-                accession_list.append(extracted_accession)
+                extracted_accession = accession_match.group(1).strip()
+                if (str(row[3]) != extracted_accession):
+                    print(f'Accession # {str(row[3])} not matched for patient {str(row[13])}')
+                    accession_list.append('')
+                else:
+                    accession_list.append(extracted_accession)
 
-        # Get patient ID
-        patient_id = row[13]
-        id_list.append(patient_id)
+            # Get gender
+            gender = row[11]
+            if gender == 'Female':
+                gender_list.append('F')
+            else:
+                gender_list.append('M')
+                
+            # Get DOB
+            if dob_match:
+                extracted_dob = dob_match.group(1).strip()
+                dob_file.write(extracted_dob + '\n')
+                dob_list.append(extracted_dob)
+            else:
+                no_dob_count += 1
+                dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
+                dob_list.append('')
 
-        # Get gender
-        gender = row[11]
-        if gender == 'Female':
-            gender_list.append('F')
-        else:
-            gender_list.append('M')
+            # Get Completion Date
+            completion_match = completion_pattern.search(report)
             
-        # Get DOB
-        if dob_match:
-            extracted_dob = dob_match.group(1).strip()
-            dob_file.write(extracted_dob + '\n')
-            dob_list.append(extracted_dob)
-        else:
-            no_dob_count += 1
-            dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
-            dob_list.append('')
+            if completion_match:
+                extracted_completion = completion_match.group(1).split()[0]
+                completion_list.append(extracted_completion)
+            else:
+                completion_list.append('')
 
-        # Get Completion Date
-        completion_match = completion_pattern.search(report)
-        
-        if completion_match:
-            extracted_completion = completion_match.group(1).split()[0]
-            completion_list.append(extracted_completion)
-        else:
-            completion_list.append('')
+    # Print out number of dupes
+    print(f'Number of dupes: {dupe_count}')
 
     # First write out number of patients with incomplete reports
     dob_file.write(f'Number of patients with incomplete reports: {str(no_dob_count)}')
@@ -103,21 +116,6 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
 
     # Combine dataframes into one dataframe
     combined_df = pd.concat([accession_df, id_df, gender_df, dob_df, completion_df], axis=1)
-
-    # Check for duplicates from original patients sheet
-    duplicates = check_duplicates(id_df)
-
-    # Before getting date diff, remove the dupes from the list
-
-    indices_to_drop = []
-    for index, row in combined_df.iterrows():
-        for dupe in duplicates:
-            if dupe == row['Patient ID']:
-                print(f'dupe found for {row["Patient ID"]}!')
-                indices_to_drop.append(index)
-
-    # Drop the dupe patients
-    combined_df = combined_df.drop(indices_to_drop)
 
     # Now get date difference between DOB and CT Completion date
     from datetime import datetime
