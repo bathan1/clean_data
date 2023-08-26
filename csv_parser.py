@@ -16,34 +16,47 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     a_data = {'Accession no.': []}
     accession_df = pd.DataFrame(a_data)
     accession_list = []
-    accession_term = 'Accession #:' # To ensure that the accessions match up to report
+    
 
-    # MRN column setup
+    # MRN dataframe
     id_data = {'Patient ID': []}
     id_df = pd.DataFrame(id_data)
     id_list = []
 
+    # Gender dataframe
     gender_data = {'Gender': []}
     gender_df = pd.DataFrame(gender_data)
     gender_list = []
 
-    # DOB column setup
+    # DOB dataframe
     dob_data = {'DOB': []}
     dob_df = pd.DataFrame(dob_data)
     dob_list = []
 
-    # Study Date Column setup
-    completion_term = 'Completion Date:'
-    completion_pattern = re.compile(rf'{re.escape(completion_term)}\s+(.*)')
-
-    # Make am empty dataframe for completion date
+    # Completion dataframe
     completion_data = {'Completion Date': []}
     completion_df = pd.DataFrame(completion_data)
     completion_list = []
 
+    # Duplicate dataframe
     dupe_data = {'Duplicates': []}
     dupe_df = pd.DataFrame(dupe_data)
     dupe_list = []
+
+    # Report dataframe
+    report_data = {'Report': []}
+    report_df = pd.DataFrame(report_data)
+    report_list = []
+
+    # Get RegExs ready
+
+    # Completion RegEx
+    completion_term = 'Completion Date:'
+    completion_pattern = re.compile(rf'{re.escape(completion_term)}\s+(.*)')
+
+    # Accession RegEx
+    accession_term = 'Accession #:' # To ensure that the accessions match up to report
+    accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
 
     # Initialize duplicate count
     dupe_count = 0
@@ -63,7 +76,6 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         id_list.append(patient_id)
 
         # Get accessions
-        accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
         accession_match = accession_pattern.search(report)
         # Ensure accessions in report match accession in spreadsheet
         if not accession_match:
@@ -103,6 +115,8 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         else:
             completion_list.append('')
 
+        report_list.append(report)
+
     # Print out number of dupes
     print(f'Number of dupes: {dupe_count}')
 
@@ -117,6 +131,7 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     dob_df['DOB'] = dob_list 
     completion_df['Completion Date'] = completion_list 
     dupe_df['Duplicates'] = dupe_list
+    report_df['Report'] = report_list
 
     # Write out dupes to csv
     dupe_df.to_csv('./out/dupes.csv', index=False)
@@ -124,6 +139,9 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
 
     # Combine dataframes into one dataframe
     combined_df = pd.concat([accession_df, id_df, gender_df, dob_df, completion_df], axis=1)
+
+    # Make a df that holds just patient ID and report
+    final_report_df = pd.concat([id_df, report_df], axis=1)
 
     # Now get date difference between DOB and CT Completion date
     from datetime import datetime
@@ -168,3 +186,5 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     combined_df = pd.concat([combined_df, age_df], axis=1)
     combined_df.to_csv(f'./out/{output_file_name}', index=False)
     print('Wrote out all data to csv!')
+
+    return final_report_df
