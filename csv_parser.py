@@ -141,7 +141,9 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
             age_yrs = age_days / 365
             age_yrs_list.append(age_yrs)
 
-        except TypeError:
+        except:
+            age_mos_list.append('')
+            age_yrs_list.append('')
             print(f'Invalid DOB for patient {row[1]}')
             continue
 
