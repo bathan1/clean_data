@@ -50,11 +50,15 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         accession_match = accession_pattern.search(report)
         # Ensure accessions in report match accession in spreadsheet
         if not accession_match:
-            print(f'Accession# {str(row[3])} not matched for patient {str(row[13])}')
+            print(f'No Accession # found for patient {str(row[13])}')
             accession_list.append('')
         else:
             extracted_accession = accession_match.group(1).strip()
-            accession_list.append(extracted_accession)
+            if (str(row[3]) != extracted_accession):
+                print(f'Accession # {str(row[3])} not matched for patient {str(row[13])}')
+                accession_list.append('')
+            else:
+                accession_list.append(extracted_accession)
 
         # Get patient ID
         patient_id = row[13]
