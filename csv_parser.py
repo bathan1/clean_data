@@ -50,7 +50,8 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         accession_match = accession_pattern.search(report)
         # Ensure accessions in report match accession in spreadsheet
         if not accession_match:
-            print(f'Accession not matched: {str(row[3])}')
+            print(f'Accession# {str(row[3])} not matched for patient {str(row[13])}')
+            accession_list.append('')
         else:
             extracted_accession = accession_match.group(1).strip()
             accession_list.append(extracted_accession)
@@ -74,6 +75,7 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         else:
             no_dob_count += 1
             dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
+            dob_list.append('')
 
         # Get Completion Date
         completion_match = completion_pattern.search(report)
@@ -81,6 +83,8 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
         if completion_match:
             extracted_completion = completion_match.group(1).split()[0]
             completion_list.append(extracted_completion)
+        else:
+            completion_list.append('')
 
     # First write out number of patients with incomplete reports
     dob_file.write(f'Number of patients with incomplete reports: {str(no_dob_count)}')
@@ -150,5 +154,5 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
 
     # Concatenate ages to main dataframe
     combined_df = pd.concat([combined_df, age_df], axis=1)
-    combined_df.to_csv(f'./csvs/{output_file_name}', index=False)
+    combined_df.to_csv(f'./out/{output_file_name}', index=False)
     print('Wrote out all data to csv!')

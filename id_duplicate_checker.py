@@ -1,6 +1,6 @@
 import pandas as pd
 
-existing_patients = './csvs/clean_sheet.csv'
+existing_patients = './csvs/current_patient_mrns.csv'
 comparison_df = pd.read_csv(existing_patients)
 
 def check_duplicates(id_table) -> list:
@@ -13,7 +13,7 @@ def check_duplicates(id_table) -> list:
     duplicate_count = 0
     for index_i, row_i in id_table.iterrows():
         for index_j, row_j in comparison_df.iterrows():
-            if (row_i[0] == row_j[2]):
+            if (row_i[0] == row_j[0]):
                 duplicate_count += 1
                 duplicates_list.append(row_i[0])
 
