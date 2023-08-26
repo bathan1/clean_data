@@ -1,4 +1,6 @@
 csvs
 myenv
+venv
+out
 __pycache__
 txts
