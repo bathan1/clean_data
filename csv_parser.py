@@ -28,8 +28,8 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     gender_list = []
 
     # DOB column setup
-    data = {'DOB': []}
-    dob_df = pd.DataFrame(data)
+    dob_data = {'DOB': []}
+    dob_df = pd.DataFrame(dob_data)
     dob_list = []
 
     # Study Date Column setup
@@ -37,68 +37,71 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     completion_pattern = re.compile(rf'{re.escape(completion_term)}\s+(.*)')
 
     # Make am empty dataframe for completion date
-    data = {'Completion Date': []}
-    completion_df = pd.DataFrame(data)
+    completion_data = {'Completion Date': []}
+    completion_df = pd.DataFrame(completion_data)
     completion_list = []
+
+    dupe_data = {'Duplicates': []}
+    dupe_df = pd.DataFrame(dupe_data)
+    dupe_list = []
 
     # Initialize duplicate count
     dupe_count = 0
-    with open('./out/duplicates.txt', 'w') as dupe_file:
-        for index, row in cleaned_df.iterrows():
-            report = str(row[report_column])
-            dob_match = dob_pattern.search(report)
+    for index, row in cleaned_df.iterrows():
+        report = str(row[report_column])
+        dob_match = dob_pattern.search(report)
 
-            # Get patient ID
-            patient_id = row[13]
-            # Check if patient is a dupe
-            (is_dupe, dupe_count) = check_duplicates(patient_id, dupe_count)
-            if is_dupe:
-                print(f'Patient {patient_id} is a dupe!')
-                dupe_file.write(f'{patient_id}\n')
-                continue
-            # If patient isn't a dupe, continue with the parsing
-            id_list.append(patient_id)
+        # Get patient ID
+        patient_id = row[13]
+        # Check if patient is a dupe
+        (is_dupe, dupe_count) = check_duplicates(patient_id, dupe_count)
+        if is_dupe:
+            print(f'Patient {patient_id} is a dupe!')
+            dupe_list.append(patient_id)
+            continue
+        # If patient isn't a dupe, continue with the parsing
+        id_list.append(patient_id)
 
-            # Get accessions
-            accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
-            accession_match = accession_pattern.search(report)
-            # Ensure accessions in report match accession in spreadsheet
-            if not accession_match:
-                print(f'No Accession # found for patient {str(row[13])}')
+        # Get accessions
+        accession_pattern = re.compile(rf'{re.escape(accession_term)}\s+(.*)')
+        accession_match = accession_pattern.search(report)
+        # Ensure accessions in report match accession in spreadsheet
+        if not accession_match:
+            print(f'No Accession # found for patient {str(row[13])}')
+            accession_list.append('')
+        else:
+            extracted_accession = accession_match.group(1).strip()
+            if (str(row[3]) != extracted_accession):
+                print(f'Accession # {str(row[3])} not matched for patient {str(row[13])}')
                 accession_list.append('')
             else:
-                extracted_accession = accession_match.group(1).strip()
-                if (str(row[3]) != extracted_accession):
-                    print(f'Accession # {str(row[3])} not matched for patient {str(row[13])}')
-                    accession_list.append('')
-                else:
-                    accession_list.append(extracted_accession)
+                accession_list.append(extracted_accession)
 
-            # Get gender
-            gender = row[11]
-            if gender == 'Female':
-                gender_list.append('F')
-            else:
-                gender_list.append('M')
-                
-            # Get DOB
-            if dob_match:
-                extracted_dob = dob_match.group(1).strip()
-                dob_file.write(extracted_dob + '\n')
-                dob_list.append(extracted_dob)
-            else:
-                no_dob_count += 1
-                dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
-                dob_list.append('')
-
-            # Get Completion Date
-            completion_match = completion_pattern.search(report)
+        # Get gender
+        gender = row[11]
+        if gender == 'Female':
+            gender_list.append('F')
+        else:
+            gender_list.append('M')
             
-            if completion_match:
-                extracted_completion = completion_match.group(1).split()[0]
-                completion_list.append(extracted_completion)
-            else:
-                completion_list.append('')
+        # Get DOB
+        if dob_match:
+            extracted_dob = dob_match.group(1).strip()
+            dob_file.write(extracted_dob + '\n')
+            dob_list.append(extracted_dob)
+        else:
+            no_dob_count += 1
+            dob_file.write(f'No D.O.B. found for accession no. : {str(row[3])}\n')
+            dob_list.append('')
+
+        # Get Completion Date
+        completion_match = completion_pattern.search(report)
+        
+        if completion_match:
+            extracted_completion = completion_match.group(1).split()[0]
+            completion_list.append(extracted_completion)
+        else:
+            completion_list.append('')
 
     # Print out number of dupes
     print(f'Number of dupes: {dupe_count}')
@@ -113,6 +116,11 @@ def parse_csv(cleaned_df: pd.DataFrame, output_file_name: str):
     gender_df['Gender'] = gender_list
     dob_df['DOB'] = dob_list 
     completion_df['Completion Date'] = completion_list 
+    dupe_df['Duplicates'] = dupe_list
+
+    # Write out dupes to csv
+    dupe_df.to_csv('./out/dupes.csv', index=False)
+    print('Wrote out dupes!')
 
     # Combine dataframes into one dataframe
     combined_df = pd.concat([accession_df, id_df, gender_df, dob_df, completion_df], axis=1)
